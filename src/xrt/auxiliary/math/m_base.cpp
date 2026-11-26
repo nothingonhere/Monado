@@ -225,6 +225,12 @@ math_vec3_f64_convert_from_opencv(const struct xrt_vec3_f64 *in, struct xrt_vec3
  */
 
 extern "C" void
+math_quat_from_quat_f64(const struct xrt_quat_f64 *in, struct xrt_quat *out)
+{
+	map_quat(*out) = map_quat_f64(*in).cast<float>();
+}
+
+extern "C" void
 math_quat_from_angle_vector(float angle_rads, const struct xrt_vec3 *vector, struct xrt_quat *result)
 {
 	map_quat(*result) = Eigen::AngleAxisf(angle_rads, copy(vector));

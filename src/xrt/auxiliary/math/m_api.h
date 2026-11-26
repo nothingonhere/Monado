@@ -250,6 +250,16 @@ math_vec3_f64_convert_from_opencv(const struct xrt_vec3_f64 *in, struct xrt_vec3
  */
 
 /*!
+ * Create a single quaternion from a double quaternion.
+ *
+ * @relates xrt_quat
+ * @see xrt_quat_f64
+ * @ingroup aux_math
+ */
+void
+math_quat_from_quat_f64(const struct xrt_quat_f64 *in, struct xrt_quat *out);
+
+/*!
  * Create a rotation from an angle in radians and a unit vector.
  *
  * @relates xrt_quat

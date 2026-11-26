@@ -261,6 +261,19 @@ struct xrt_quat
 // clang-format on
 
 /*!
+ * A quaternion with double floats.
+ *
+ * @ingroup xrt_iface math
+ */
+struct xrt_quat_f64
+{
+	double x;
+	double y;
+	double z;
+	double w;
+};
+
+/*!
  * A 1 element vector with single floats.
  *
  * @ingroup xrt_iface math
