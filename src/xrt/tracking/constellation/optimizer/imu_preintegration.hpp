@@ -351,12 +351,10 @@ computeImuResidual(const PreintegratedImuSamples &imu_preintegration,
                    const WorldGravity<T> &world_gravity,
                    Vector<T, PreintegratedImuSamples::kNumResiduals> &residual)
 {
-	Quaternion<T> Q_world_device_start;
-	start_T_world_device.getQuaternion(Q_world_device_start);
+	Quaternion<T> Q_world_device_start = start_T_world_device.rotation;
 	auto start_Q_device_world = Q_world_device_start.conjugate();
 
-	Quaternion<T> end_Q_world_device;
-	end_T_world_device.getQuaternion(end_Q_world_device);
+	Quaternion<T> end_Q_world_device = end_T_world_device.rotation;
 
 	Vector3<T> gravity_vector = world_gravity.toVector();
 

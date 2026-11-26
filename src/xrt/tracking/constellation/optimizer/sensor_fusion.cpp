@@ -1080,11 +1080,11 @@ integrateToTimestampHistory(const double world_gravity_mag,
 	 * take the model back off it for everything that leaves here. The two share an origin, so position and
 	 * velocity need no conversion.
 	 */
-	const Quaterniond Q_model_imu = map_quat(inout_solve.imu_calibration.Qcv_model_imu).cast<double>().normalized();
+	const Quaterniond Q_model_imu = map_quat_f64(inout_solve.imu_calibration.Qcv_model_imu).normalized();
 
 	timepoint_ns pose_ns = inout_solve.time_ns;
-	Vector3d T_world_device = map_vec3(inout_solve.Tcv_world_device.position).cast<double>();
-	Quaterniond Q_world_model = map_quat(inout_solve.Tcv_world_device.orientation).cast<double>();
+	Vector3d T_world_device = map_vec3_f64(inout_solve.Tcv_world_device);
+	Quaterniond Q_world_model = map_quat_f64(inout_solve.Qcv_world_device);
 	Quaterniond Q_world_imu = Q_world_model * Q_model_imu;
 
 	const ImuBias<double> bias(map_vec3_f64(inout_solve.imu_calibration.accel_bias),
@@ -1156,8 +1156,8 @@ integrateToTimestampHistory(const double world_gravity_mag,
 #endif
 	}
 
-	map_vec3(inout_solve.Tcv_world_device.position) = T_world_device.cast<float>();
-	map_quat(inout_solve.Tcv_world_device.orientation) = Q_world_model.cast<float>();
+	map_vec3_f64(inout_solve.Tcv_world_device) = T_world_device;
+	map_quat_f64(inout_solve.Qcv_world_device) = Q_world_model;
 	map_vec3_f64(inout_solve.world_velocity) = world_velocity;
 	inout_solve.covariance = cov_model;
 	inout_solve.time_ns = pose_ns;
@@ -1577,7 +1577,7 @@ struct SensorFusionProblem
 			auto &imu_extrinsics_block = blocks.imu_extrinsics;
 
 			if (!imu_extrinsics_block.seeded) {
-				ImuExtrinsics<double>(map_quat(latest_imu_calib.Qcv_model_imu).cast<double>())
+				ImuExtrinsics<double>(map_quat_f64(latest_imu_calib.Qcv_model_imu).coeffs())
 				    .pack(imu_extrinsics_block.seedVec());
 			}
 
@@ -1931,8 +1931,8 @@ struct SensorFusionProblem
 		// Left identity for a device the solve skipped.
 		out_device.Qcv_model_imu = XRT_QUAT_IDENTITY;
 		if (blocks.imu_extrinsics.seeded) {
-			map_quat(out_device.Qcv_model_imu) =
-			    ImuExtrinsics<double>(blocks.imu_extrinsics.vec).Q_model_imu.coeffs().cast<float>();
+			map_quat_f64(out_device.Qcv_model_imu) =
+			    ImuExtrinsics<double>(blocks.imu_extrinsics.vec).Q_model_imu.coeffs();
 		}
 
 		snapshot.num_keyframes = fusion->num_keyframes;
@@ -1989,7 +1989,8 @@ struct SensorFusionProblem
 			const ImuExtrinsics<double> extrinsics{extrinsics_block.vec};
 
 			SolvedDeviceKeyframe &solved = out.device;
-			solved.Tcv_world_device = pose.toXrtPose();
+			map_vec3_f64(solved.Tcv_world_device) = pose.translation;
+			map_quat_f64(solved.Qcv_world_device) = pose.rotation;
 			map_vec3_f64(solved.linear_velocity) = pose.velocity;
 
 			solved.imu_sample_valid = preintegration.imu_preintegration.imu_sample_valid;
@@ -3289,23 +3290,25 @@ SensorFusion::tickLocked(bool have_new_input)
 		        XRT_SPACE_RELATION_ORIENTATION_VALID_BIT | XRT_SPACE_RELATION_POSITION_VALID_BIT |
 		        XRT_SPACE_RELATION_LINEAR_VELOCITY_VALID_BIT | XRT_SPACE_RELATION_ANGULAR_VELOCITY_VALID_BIT |
 		        XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT | XRT_SPACE_RELATION_POSITION_TRACKED_BIT),
-		    .pose = keyframe.device.Tcv_world_device,
+		    .pose = XRT_POSE_IDENTITY,
 		    .linear_velocity = {},
 		    .angular_velocity = {},
 		};
+		map_quat(relation.pose.orientation) = map_quat_f64(keyframe.device.Qcv_world_device).cast<float>();
+		map_vec3(relation.pose.position) = map_vec3_f64(keyframe.device.Tcv_world_device).cast<float>();
 		map_vec3(relation.linear_velocity) = map_vec3_f64(keyframe.device.linear_velocity).cast<float>();
 		map_vec3(relation.angular_velocity) =
 		    map_vec3_f64(keyframe.device.world_imu_sample.gyro_rad_secs).cast<float>();
 
-		auto entry = CovarianceRelationHistoryEntry(                 //
-		    relation,                                                //
-		    keyframe.timestamp_ns,                                   //
-		    keyframe.device.covariance,                              //
-		    &this->device.sensor_calibration,                        //
-		    keyframe.device.raw_imu_sample,                          //
-		    keyframe.device.calibrated_imu_sample,                   //
-		    map_vec3_f64(keyframe.device.accel_scale),               //
-		    map_quat(snapshot.device.Qcv_model_imu).cast<double>()); //
+		auto entry = CovarianceRelationHistoryEntry(      //
+		    relation,                                     //
+		    keyframe.timestamp_ns,                        //
+		    keyframe.device.covariance,                   //
+		    &this->device.sensor_calibration,             //
+		    keyframe.device.raw_imu_sample,               //
+		    keyframe.device.calibrated_imu_sample,        //
+		    map_vec3_f64(keyframe.device.accel_scale),    //
+		    map_quat_f64(snapshot.device.Qcv_model_imu)); //
 
 		bool success = this->device.keyframe_relation_history.pushOrUpdate(entry, true);
 
@@ -3325,6 +3328,7 @@ SensorFusion::tickLocked(bool have_new_input)
 		this->device.latest_solve = DeviceSolveState{
 		    .time_ns = keyframe.timestamp_ns,
 		    .Tcv_world_device = keyframe.device.Tcv_world_device,
+		    .Qcv_world_device = keyframe.device.Qcv_world_device,
 		    .world_velocity = keyframe.device.linear_velocity,
 		    .imu_calibration =
 		        {

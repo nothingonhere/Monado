@@ -632,25 +632,6 @@ struct RigCalibrationProblem
  *
  */
 
-xrt_pose
-toXrtPose(const Quaterniond &orientation, const Vector3d &position)
-{
-	xrt_pose out = XRT_POSE_IDENTITY;
-	map_quat(out.orientation) = orientation.normalized().cast<float>();
-	map_vec3(out.position) = position.cast<float>();
-
-	return out;
-}
-
-xrt_pose
-toXrtPose(const Pose<double> &pose)
-{
-	Quaterniond orientation;
-	pose.getQuaternion(orientation);
-
-	return toXrtPose(orientation, pose.translation);
-}
-
 /*!
  * Estimates the pitch and roll of the 2dof camera by estimating where "up" is to the IMU.
  *
@@ -996,7 +977,7 @@ unpackResult(t_constellation_device_id_t device_id,
 		map_vec3_f64(result.imu.accel_bias) = bias.accel_bias;
 		map_vec3_f64(result.imu.gyro_bias) = bias.gyro_bias;
 		map_vec3_f64(result.imu.accel_scale) = bias.accel_scale;
-		map_quat(result.imu.Qcv_model_imu) = extrinsics.Q_model_imu.cast<float>();
+		map_quat_f64(result.imu.Qcv_model_imu) = extrinsics.Q_model_imu;
 	}
 
 	{
@@ -1032,7 +1013,7 @@ unpackResult(t_constellation_device_id_t device_id,
 			const Pose<double> pose(Map<const Vector<double, Pose<double>::kNumParameters>>(
 			    blocks.dynamic_cameras.at(camera.dynamic_parameter_idx).data()));
 
-			camera_calibration.Tcv_world_cam = toXrtPose(pose);
+			camera_calibration.Tcv_world_cam = pose.toXrtPose();
 		} else {
 			// Held where the solve was told it sits, so it comes back out unchanged.
 			camera_calibration.Tcv_world_cam = camera.Tcv_world_cam;
@@ -1050,7 +1031,7 @@ unpackResult(t_constellation_device_id_t device_id,
 
 		KeyframeCalibration keyframe_calibration = {
 		    .timestamp_ns = keyframe.timestamp_ns,
-		    .Tcv_world_device = toXrtPose(pose),
+		    .Tcv_world_device = pose.toXrtPose(),
 		    .velocity_m_s = {},
 		    .camera_samples = {},
 		};

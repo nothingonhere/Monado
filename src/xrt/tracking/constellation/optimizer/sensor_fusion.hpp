@@ -223,15 +223,17 @@ struct DeviceImuCalibration
 	xrt_vec3_f64 accel_scale XRT_VEC3_ONE;
 
 	//! The LED model -> IMU rotation.
-	xrt_quat Qcv_model_imu XRT_QUAT_IDENTITY;
+	xrt_quat_f64 Qcv_model_imu XRT_QUAT_IDENTITY;
 };
 
 struct DeviceSolveState
 {
 	//! The time of the solve
 	timepoint_ns time_ns;
-	//! The world -> LED model pose at the solve
-	xrt_pose Tcv_world_device;
+	//! The position component of the world -> LED model pose at the solve
+	xrt_vec3_f64 Tcv_world_device;
+	//! The orientation component of the world -> LED model pose at the solve
+	xrt_quat_f64 Qcv_world_device;
 	//! The world velocity at the solve
 	xrt_vec3_f64 world_velocity;
 	//! The imu calibration at the solve
@@ -345,8 +347,10 @@ public: // Fields
 //! A device's solved state at one keyframe.
 struct SolvedDeviceKeyframe
 {
-	//! Solved world -> LED model pose.
-	xrt_pose Tcv_world_device;
+	//! The positional part of the solved world -> LED model pose.
+	xrt_vec3_f64 Tcv_world_device;
+	//! The orientational part of the solved world -> LED model pose.
+	xrt_quat_f64 Qcv_world_device;
 	//! Solved world-frame velocity, in meters per second.
 	xrt_vec3_f64 linear_velocity;
 
@@ -415,10 +419,10 @@ struct SnapshotDevice
 	uint32_t keyframe_mask;
 
 	//! Solved LED model -> IMU rotation.
-	xrt_quat Qcv_model_imu;
+	xrt_quat_f64 Qcv_model_imu;
 
 	//! The LED model -> IMU rotation from the rig calibration, for measuring how far the solve has walked from it.
-	xrt_quat calibrated_Qcv_model_imu;
+	xrt_quat_f64 calibrated_Qcv_model_imu;
 };
 
 /*!

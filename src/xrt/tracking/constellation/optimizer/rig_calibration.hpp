@@ -104,7 +104,7 @@ public: // Fields
 	xrt_vec3_f64 accel_scale;
 
 	//! The LED model -> IMU rotation.
-	xrt_quat Qcv_model_imu;
+	xrt_quat_f64 Qcv_model_imu;
 };
 
 //! The pose the calibration ended up with for a single camera.

@@ -307,12 +307,6 @@ template <typename T> struct Pose
 		       Eigen::Transform<T, 3, Eigen::Isometry>(this->rotation);
 	}
 
-	void
-	getQuaternion(Quaternion<T> &q) const
-	{
-		q = this->rotation;
-	}
-
 	xrt_pose
 	toXrtPose() const
 	{
