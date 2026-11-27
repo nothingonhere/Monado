@@ -109,25 +109,27 @@ TEST_CASE("b_sink_bridge")
 	b_sink_bridge *bsb = nullptr;
 	REQUIRE(b_sink_bridge_create(&send, &bsb) == XRT_SUCCESS);
 
-	xrt_frame_sink *frame_in = b_sink_bridge_get_frame_sink(bsb, 1);
+	// Frame and timing sources are indexed separately, use different ones.
+	xrt_frame_sink *frame_in = b_sink_bridge_get_frame_sink(bsb, 2);
 	producer.sink = frame_in;
 	t_timing_event_sink *timing_in = b_sink_bridge_get_timing_sink(bsb, 1);
 	CountingFrameSink frames;
 	CountingTimingSink timings;
 
 	// Nothing to add to before attach.
-	CHECK(xrt_frame_source_add_sink(b_sink_bridge_get_frame_source(bsb, 1), &frames.base) != XRT_SUCCESS);
+	CHECK(xrt_frame_source_add_sink(b_sink_bridge_get_frame_source(bsb, 2), &frames.base) != XRT_SUCCESS);
 	CHECK(t_timing_event_source_add_sink(b_sink_bridge_get_timing_source(bsb, 1), &timings.base) != 0);
 	push(frame_in);
 
 	REQUIRE(b_sink_bridge_attach(bsb, &recv) == XRT_SUCCESS);
 	CHECK(b_sink_bridge_attach(bsb, &recv) != XRT_SUCCESS);
-	CHECK(xrt_frame_source_add_sink(b_sink_bridge_get_frame_source(bsb, 1), &frames.base) == XRT_SUCCESS);
+	CHECK(xrt_frame_source_add_sink(b_sink_bridge_get_frame_source(bsb, 2), &frames.base) == XRT_SUCCESS);
 	CHECK(t_timing_event_source_add_sink(b_sink_bridge_get_timing_source(bsb, 1), &timings.base) == 0);
 
 	push(frame_in);
 	push(timing_in);
-	push(b_sink_bridge_get_frame_sink(bsb, 0)); // Other channel.
+	push(b_sink_bridge_get_frame_sink(bsb, 1));  // Other frame source.
+	push(b_sink_bridge_get_timing_sink(bsb, 2)); // Other timing source.
 	CHECK(frames.count == 1);
 	CHECK(timings.count == 1);
 
@@ -144,7 +146,7 @@ TEST_CASE("b_sink_bridge")
 		push(frame_in);
 		CHECK(frames.count == 1);
 
-		CHECK(xrt_frame_source_add_sink(b_sink_bridge_get_frame_source(bsb, 1), &frames.base) == XRT_SUCCESS);
+		CHECK(xrt_frame_source_add_sink(b_sink_bridge_get_frame_source(bsb, 2), &frames.base) == XRT_SUCCESS);
 		push(frame_in);
 		CHECK(frames.count == 2);
 
@@ -159,6 +161,42 @@ TEST_CASE("b_sink_bridge")
 		CHECK(frames.count == 1);
 		xrt_frame_context_destroy_nodes(&recv);
 	}
+}
+
+TEST_CASE("b_sink_bridge every index")
+{
+	xrt_frame_context send = {};
+	xrt_frame_context recv = {};
+	b_sink_bridge *bsb = nullptr;
+	REQUIRE(b_sink_bridge_create(&send, &bsb) == XRT_SUCCESS);
+	REQUIRE(b_sink_bridge_attach(bsb, &recv) == XRT_SUCCESS);
+
+	CountingFrameSink frames[B_SINK_BRIDGE_MAX_FRAME_SOURCES];
+	for (uint32_t i = 0; i < B_SINK_BRIDGE_MAX_FRAME_SOURCES; i++) {
+		CHECK(xrt_frame_source_add_sink(b_sink_bridge_get_frame_source(bsb, i), &frames[i].base) ==
+		      XRT_SUCCESS);
+		for (uint32_t k = 0; k <= i; k++) {
+			push(b_sink_bridge_get_frame_sink(bsb, i));
+		}
+	}
+
+	CountingTimingSink timings[B_SINK_BRIDGE_MAX_TIMING_SOURCES];
+	for (uint32_t i = 0; i < B_SINK_BRIDGE_MAX_TIMING_SOURCES; i++) {
+		CHECK(t_timing_event_source_add_sink(b_sink_bridge_get_timing_source(bsb, i), &timings[i].base) == 0);
+		for (uint32_t k = 0; k <= i; k++) {
+			push(b_sink_bridge_get_timing_sink(bsb, i));
+		}
+	}
+
+	for (uint32_t i = 0; i < B_SINK_BRIDGE_MAX_FRAME_SOURCES; i++) {
+		CHECK(frames[i].count == int(i + 1));
+	}
+	for (uint32_t i = 0; i < B_SINK_BRIDGE_MAX_TIMING_SOURCES; i++) {
+		CHECK(timings[i].count == int(i + 1));
+	}
+
+	xrt_frame_context_destroy_nodes(&recv);
+	xrt_frame_context_destroy_nodes(&send);
 }
 
 TEST_CASE("b_sink_bridge never attached")
