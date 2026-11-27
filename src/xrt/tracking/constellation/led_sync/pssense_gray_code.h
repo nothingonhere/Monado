@@ -144,7 +144,7 @@ handle_leds_seen(struct t_led_sync_refinement *refinement, const struct t_conste
 
 	// Clear the brightnesses for all cameras in the old slot.
 	if (clear_slot) {
-		for (uint32_t camera_idx = 0; camera_idx < XRT_TRACKING_MAX_CAMS; camera_idx++) {
+		for (uint32_t camera_idx = 0; camera_idx < XRT_TRACKING_MAX_FRAME_SOURCES; camera_idx++) {
 			for (uint32_t led_idx = 0; led_idx < T_LED_SYNC_SELECTED_LEDS; led_idx++) {
 				size_t led_buffer_index =
 				    T_LED_SYNC_GRAY_CODE_BUFFER_INDEX(camera_idx, sample->sequence_id, led_idx);
@@ -276,8 +276,8 @@ handle_decode_gray_constellation_sample(struct t_led_sync_refinement *refinement
 		uint16_t decoded_values[T_LED_SYNC_SELECTED_LEDS] = {0};
 
 		for (int led = 0; led < T_LED_SYNC_SELECTED_LEDS; led++) {
-			float min_observed_brightness[XRT_TRACKING_MAX_CAMS];
-			float max_observed_brightness[XRT_TRACKING_MAX_CAMS] = {0};
+			float min_observed_brightness[XRT_TRACKING_MAX_FRAME_SOURCES];
+			float max_observed_brightness[XRT_TRACKING_MAX_FRAME_SOURCES] = {0};
 			for (uint32_t i = 0; i < ARRAY_SIZE(min_observed_brightness); i++) {
 				min_observed_brightness[i] = INFINITY;
 			}
@@ -293,7 +293,8 @@ handle_decode_gray_constellation_sample(struct t_led_sync_refinement *refinement
 				float best_facing_dot = 1.0f;
 				float best_brightness = 0.0f;
 
-				for (int camera_index = 0; camera_index < XRT_TRACKING_MAX_CAMS; camera_index++) {
+				for (int camera_index = 0; camera_index < XRT_TRACKING_MAX_FRAME_SOURCES;
+				     camera_index++) {
 					// Pick which camera's data to use
 					size_t led_buffer_index = T_LED_SYNC_GRAY_CODE_BUFFER_INDEX(
 					    camera_index, (refinement->leds_seen.cur_sequence_id - age), led);
@@ -403,7 +404,7 @@ bg_store_frame(struct t_led_sync_refinement *refinement, const struct t_constell
 		refinement->optimize_brightness_curve.window_start_sequence_id = sample->sequence_id + 1;
 	}
 
-	assert(sample->camera_index < XRT_TRACKING_MAX_CAMS);
+	assert(sample->camera_index < XRT_TRACKING_MAX_FRAME_SOURCES);
 	struct t_led_sync_frame *frame = bg_frame(refinement, sample->camera_index, sample->sequence_id);
 
 	frame->sequence_id = sample->sequence_id;
@@ -434,7 +435,7 @@ bg_read_window(struct t_led_sync_refinement *refinement,
 	int best_camera = -1;
 	float best_facing_dot = INFINITY;
 
-	for (uint32_t camera = 0; camera < XRT_TRACKING_MAX_CAMS; camera++) {
+	for (uint32_t camera = 0; camera < XRT_TRACKING_MAX_FRAME_SOURCES; camera++) {
 		bool complete = true;
 		float facing_dot = 0.0f;
 

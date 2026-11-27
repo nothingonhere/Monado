@@ -59,13 +59,13 @@ struct euroc_recorder
 	struct xrt_slam_sinks cloner_queues; //!< Queue sinks that write into cloner sinks
 	struct xrt_imu_sink cloner_imu_sinks[XRT_TRACKING_MAX_IMUS];
 	struct xrt_pose_sink cloner_gt_sink;
-	struct xrt_frame_sink cloner_sinks[XRT_TRACKING_MAX_CAMS];
+	struct xrt_frame_sink cloner_sinks[XRT_TRACKING_MAX_FRAME_SOURCES];
 
 	// Writer sinks: write copied frame to disk
 	struct xrt_slam_sinks writer_queues; //!< Queue sinks that write into writer sinks
 	struct xrt_imu_sink writer_imu_sinks[XRT_TRACKING_MAX_IMUS];
 	struct xrt_pose_sink writer_gt_sink;
-	struct xrt_frame_sink writer_sinks[XRT_TRACKING_MAX_CAMS];
+	struct xrt_frame_sink writer_sinks[XRT_TRACKING_MAX_FRAME_SOURCES];
 
 	vector<queue<xrt_imu_sample>> imu_queues{}; //!< IMU pushes are delayed here until cam0 push
 	vector<mutex> imu_queue_locks{}; //!< Lock for each imu_queues[i], vector doesn't need lock, it's only read
@@ -77,7 +77,7 @@ struct euroc_recorder
 	// Using pointers because of `container_of`
 	ofstream *imus_csv[XRT_TRACKING_MAX_IMUS] = {};
 	ofstream *gt_csv = nullptr;
-	ofstream *cams_csv[XRT_TRACKING_MAX_CAMS] = {};
+	ofstream *cams_csv[XRT_TRACKING_MAX_FRAME_SOURCES] = {};
 };
 
 
@@ -238,12 +238,13 @@ euroc_recorder_save_frame(euroc_recorder *er, struct xrt_frame *frame, int cam_i
 		euroc_recorder_save_frame(er, frame, cam_id);                                                          \
 	}
 
-XRT_TRACKING_FOR_EACH_CAM(DEFINE_SAVE_CAM)
+XRT_TRACKING_FOR_EACH_FRAME_SOURCE(DEFINE_SAVE_CAM)
 
 #define USE_SAVE_CAM(cam_id) euroc_recorder_save_cam##cam_id,
 
-static void (*euroc_recorder_save_cam[XRT_TRACKING_MAX_CAMS])(struct xrt_frame_sink *sink, struct xrt_frame *frame) = {
-    XRT_TRACKING_FOR_EACH_CAM(USE_SAVE_CAM)};
+static void (*euroc_recorder_save_cam[XRT_TRACKING_MAX_FRAME_SOURCES])(struct xrt_frame_sink *sink,
+                                                                       struct xrt_frame *frame) = {
+    XRT_TRACKING_FOR_EACH_FRAME_SOURCE(USE_SAVE_CAM)};
 
 
 /*
@@ -329,12 +330,13 @@ euroc_recorder_receive_frame(euroc_recorder *er, struct xrt_frame *src_frame, in
 		euroc_recorder_receive_frame(er, frame, cam_id);                                                       \
 	}
 
-XRT_TRACKING_FOR_EACH_CAM(DEFINE_RECEIVE_CAM)
+XRT_TRACKING_FOR_EACH_FRAME_SOURCE(DEFINE_RECEIVE_CAM)
 
 #define USE_RECEIVE_CAM(cam_id) euroc_recorder_receive_cam##cam_id,
 
-static void (*euroc_recorder_receive_cam[XRT_TRACKING_MAX_CAMS])(struct xrt_frame_sink *, struct xrt_frame *) = {
-    XRT_TRACKING_FOR_EACH_CAM(USE_RECEIVE_CAM)};
+static void (*euroc_recorder_receive_cam[XRT_TRACKING_MAX_FRAME_SOURCES])(struct xrt_frame_sink *,
+                                                                          struct xrt_frame *) = {
+    XRT_TRACKING_FOR_EACH_FRAME_SOURCE(USE_RECEIVE_CAM)};
 
 
 /*

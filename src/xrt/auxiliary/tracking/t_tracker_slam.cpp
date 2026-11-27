@@ -273,10 +273,10 @@ struct TrackerSlam
 	struct vit_tracker_extension_set exts; //!< VIT tracker supported extensions
 	struct vit_tracker *tracker;           //!< Pointer to the tracker created by the loaded VIT system;
 
-	struct xrt_slam_sinks sinks = {};                       //!< Pointers to the sinks below
-	struct xrt_frame_sink cam_sinks[XRT_TRACKING_MAX_CAMS]; //!< Sends camera frames to the SLAM system
-	struct xrt_imu_sink imu_sink = {};                      //!< Sends imu samples to the SLAM system
-	struct xrt_pose_sink gt_sink = {};                      //!< Register groundtruth trajectory for stats
+	struct xrt_slam_sinks sinks = {};                                //!< Pointers to the sinks below
+	struct xrt_frame_sink cam_sinks[XRT_TRACKING_MAX_FRAME_SOURCES]; //!< Sends camera frames to the SLAM system
+	struct xrt_imu_sink imu_sink = {};                               //!< Sends imu samples to the SLAM system
+	struct xrt_pose_sink gt_sink = {};                               //!< Register groundtruth trajectory for stats
 
 	//! Mask sinks
 	struct xrt_device_masks_sink mask_sinks[XRT_TRACKING_MAX_MASK_SINKS] = {};
@@ -1367,12 +1367,12 @@ receive_frame(TrackerSlam &t, struct xrt_frame *frame, uint32_t cam_index)
 		xrt_sink_push_frame(t.euroc_recorder->cams[cam_id], frame);                                            \
 	}
 
-XRT_TRACKING_FOR_EACH_CAM(DEFINE_RECEIVE_CAM)
+XRT_TRACKING_FOR_EACH_FRAME_SOURCE(DEFINE_RECEIVE_CAM)
 
 #define USE_RECEIVE_CAM(cam_id) t_slam_receive_cam##cam_id,
 
-void (*t_slam_receive_cam[XRT_TRACKING_MAX_CAMS])(xrt_frame_sink *,
-                                                  xrt_frame *) = {XRT_TRACKING_FOR_EACH_CAM(USE_RECEIVE_CAM)};
+void (*t_slam_receive_cam[XRT_TRACKING_MAX_FRAME_SOURCES])(xrt_frame_sink *, xrt_frame *) = {
+    XRT_TRACKING_FOR_EACH_FRAME_SOURCE(USE_RECEIVE_CAM)};
 
 
 extern "C" void

@@ -12,8 +12,8 @@
 
 #define XRT_TRACKING_NAME_LEN 256
 
-#define XRT_TRACKING_MAX_CAMS 8
-#define XRT_TRACKING_FOR_EACH_CAM(_) _(0) _(1) _(2) _(3) _(4) _(5) _(6) _(7)
+#define XRT_TRACKING_MAX_FRAME_SOURCES 8
+#define XRT_TRACKING_FOR_EACH_FRAME_SOURCE(_) _(0) _(1) _(2) _(3) _(4) _(5) _(6) _(7)
 
 #define XRT_TRACKING_MAX_IMUS 3
 #define XRT_TRACKING_FOR_EACH_IMU(_) _(0) _(1) _(2)
@@ -243,7 +243,7 @@ struct xrt_device_masks_sample
 			bool enabled;             //!< Whether a mask for this hand is being reported
 			struct xrt_rect_f32 rect; //!< The mask itself in pixel coordinates
 		} devices[XRT_SYSTEM_MAX_DEVICES];
-	} views[XRT_TRACKING_MAX_CAMS];
+	} views[XRT_TRACKING_MAX_FRAME_SOURCES];
 };
 
 /*!
@@ -293,7 +293,7 @@ struct xrt_slam_sinks
 {
 	int cam_count;
 	int imu_count;
-	struct xrt_frame_sink *cams[XRT_TRACKING_MAX_CAMS];
+	struct xrt_frame_sink *cams[XRT_TRACKING_MAX_FRAME_SOURCES];
 	struct xrt_imu_sink *imus[XRT_TRACKING_MAX_IMUS];
 	//! Can receive ground truth poses if available
 	struct xrt_pose_sink *gt;

@@ -518,7 +518,7 @@ rift_open_system_impl(struct xrt_builder *xb,
 
 		struct t_constellation_tracker_camera_mosaic *mosaic = &constellation_tracker_params.mosaics[0];
 
-		for (uint32_t i = 0; i < sensor_count && i < XRT_TRACKING_MAX_CAMS; i++) {
+		for (uint32_t i = 0; i < sensor_count && i < XRT_TRACKING_MAX_FRAME_SOURCES; i++) {
 			struct rift_sensor *sensor = rb->sensors[i];
 
 			enum rift_variant sensor_variant = rift_sensor_get_variant(sensor);

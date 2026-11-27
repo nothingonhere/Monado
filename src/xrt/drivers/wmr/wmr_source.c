@@ -68,15 +68,15 @@ struct wmr_source
 	struct xrt_slam_sinks *euroc_recorder; //!< EuRoC dataset recorder
 
 	// Sinks (head tracking)
-	struct xrt_frame_sink cam_sinks[XRT_TRACKING_MAX_CAMS]; //!< Intermediate sinks for camera frames
-	struct xrt_imu_sink imu_sinks[XRT_TRACKING_MAX_IMUS];   //!< Intermediate sink for IMU samples
+	struct xrt_frame_sink cam_sinks[XRT_TRACKING_MAX_FRAME_SOURCES]; //!< Intermediate sinks for camera frames
+	struct xrt_imu_sink imu_sinks[XRT_TRACKING_MAX_IMUS];            //!< Intermediate sink for IMU samples
 	struct xrt_slam_sinks in_sinks;  //!< Pointers to intermediate sinks (SLAM and controller)
 	struct xrt_slam_sinks out_sinks; //!< Pointers to downstream sinks (only SLAM)
 
 	// UI Sinks (head tracking)
-	struct u_sink_debug ui_cam_sinks[XRT_TRACKING_MAX_CAMS]; //!< Sink to display camera frames in UI
-	struct m_ff_vec3_f32 *gyro_ffs[XRT_TRACKING_MAX_IMUS];   //!< Queue of gyroscope data to display in UI
-	struct m_ff_vec3_f32 *accel_ffs[XRT_TRACKING_MAX_IMUS];  //!< Queue of accelerometer data to display in UI
+	struct u_sink_debug ui_cam_sinks[XRT_TRACKING_MAX_FRAME_SOURCES]; //!< Sink to display camera frames in UI
+	struct m_ff_vec3_f32 *gyro_ffs[XRT_TRACKING_MAX_IMUS];            //!< Queue of gyroscope data to display in UI
+	struct m_ff_vec3_f32 *accel_ffs[XRT_TRACKING_MAX_IMUS]; //!< Queue of accelerometer data to display in UI
 
 	bool is_running;              //!< Whether the device is streaming
 	bool first_imu_received;      //!< Don't send frames until first IMU sample
@@ -108,12 +108,12 @@ struct wmr_source
 		xrt_sink_push_frame(ws->euroc_recorder->cams[cam_id], xf);                                             \
 	}
 
-XRT_TRACKING_FOR_EACH_CAM(DEFINE_RECEIVE_CAM)
+XRT_TRACKING_FOR_EACH_FRAME_SOURCE(DEFINE_RECEIVE_CAM)
 
 #define USE_RECEIVE_CAM(cam_id) receive_cam##cam_id,
 
-void (*receive_cam[XRT_TRACKING_MAX_CAMS])(struct xrt_frame_sink *,
-                                           struct xrt_frame *) = {XRT_TRACKING_FOR_EACH_CAM(USE_RECEIVE_CAM)};
+void (*receive_cam[XRT_TRACKING_MAX_FRAME_SOURCES])(struct xrt_frame_sink *, struct xrt_frame *) = {
+    XRT_TRACKING_FOR_EACH_FRAME_SOURCE(USE_RECEIVE_CAM)};
 
 #define DEFINE_RECEIVE_IMU(imu_id)                                                                                     \
 	static void receive_imu##imu_id(struct xrt_imu_sink *sink, struct xrt_imu_sample *s)                           \
@@ -336,7 +336,7 @@ wmr_source_create(struct xrt_frame_context *xfctx, struct xrt_prober_device *dev
 	xfs->source_id = *((uint64_t *)"WMR_SRC\0");
 
 	// Setup sinks
-	for (int i = 0; i < XRT_TRACKING_MAX_CAMS; i++) {
+	for (int i = 0; i < XRT_TRACKING_MAX_FRAME_SOURCES; i++) {
 		ws->cam_sinks[i].push_frame = receive_cam[i];
 	}
 	for (int i = 0; i < XRT_TRACKING_MAX_IMUS; i++) {

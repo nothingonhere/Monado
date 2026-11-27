@@ -705,7 +705,7 @@ Camera::handleProcessingComplete(CameraSample &sample, const std::span<Device *>
 		std::lock_guard<os::Mutex> lock(device->data_lock);
 
 		auto &per_camera_data =
-		    device->locked_data.per_camera[(mosaic->index * XRT_TRACKING_MAX_CAMS) + this->index];
+		    device->locked_data.per_camera[(mosaic->index * XRT_TRACKING_MAX_FRAME_SOURCES) + this->index];
 
 		// Only mark if this is the newest sample.
 		if (device_state.value()->found_pose.has_value() &&
@@ -765,7 +765,7 @@ Camera::processSampleSlow(CameraSample &sample)
 
 				auto &device_camera_data =
 				    device->locked_data
-				        .per_camera[(mosaic->index * XRT_TRACKING_MAX_CAMS) + this->index];
+				        .per_camera[(mosaic->index * XRT_TRACKING_MAX_FRAME_SOURCES) + this->index];
 				int64_t sequence_id = static_cast<int64_t>(sample.sequence_id); // signed for math
 
 				bool enable_slow_skip =

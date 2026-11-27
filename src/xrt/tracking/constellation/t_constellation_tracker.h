@@ -65,7 +65,7 @@ struct t_constellation_tracker_camera_mosaic
 	struct t_constellation_tracker_tracking_source *tracking_origin;
 
 	//! The cameras in this mosaic, with their blob sinks filled in by the constellation tracker.
-	struct t_constellation_tracker_camera cameras[XRT_TRACKING_MAX_CAMS];
+	struct t_constellation_tracker_camera cameras[XRT_TRACKING_MAX_FRAME_SOURCES];
 	//! The number of cameras in this mosaic.
 	size_t num_cameras;
 };

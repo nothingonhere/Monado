@@ -358,8 +358,8 @@ struct t_led_sync_refinement
 		 *
 		 * Indexed via @ref T_LED_SYNC_GRAY_CODE_BUFFER_INDEX
 		 */
-		float
-		    led_brightnesses[T_LED_SYNC_GRAY_CODE_SIZE_BITS * XRT_TRACKING_MAX_CAMS * T_LED_SYNC_SELECTED_LEDS];
+		float led_brightnesses[T_LED_SYNC_GRAY_CODE_SIZE_BITS * XRT_TRACKING_MAX_FRAME_SOURCES *
+		                       T_LED_SYNC_SELECTED_LEDS];
 		/*!
 		 * A ring buffer storing the last @ref T_LED_SYNC_GRAY_CODE_SIZE_BITS bits of the sequence, storing the
 		 * facing directions of each sample, so that we can pick the value from the camera that saw the LED the
@@ -367,8 +367,8 @@ struct t_led_sync_refinement
 		 *
 		 * Indexed via @ref T_LED_SYNC_GRAY_CODE_BUFFER_INDEX
 		 */
-		float
-		    led_facing_dots[T_LED_SYNC_GRAY_CODE_SIZE_BITS * XRT_TRACKING_MAX_CAMS * T_LED_SYNC_SELECTED_LEDS];
+		float led_facing_dots[T_LED_SYNC_GRAY_CODE_SIZE_BITS * XRT_TRACKING_MAX_FRAME_SOURCES *
+		                      T_LED_SYNC_SELECTED_LEDS];
 
 		//! How many decodes we've had that match in a row, see @ref GRAY_CODE_MATCHES_NEEDED
 		uint32_t matching_decodes;
@@ -385,7 +385,7 @@ struct t_led_sync_refinement
 		//! The first frame the next measurement may use.
 		uint64_t window_start_sequence_id;
 		//! Ring buffer of the last @ref T_LED_SYNC_BRIGHTNESS_CURVE_NUM_SAMPLES frames per camera.
-		struct t_led_sync_frame frames[XRT_TRACKING_MAX_CAMS][T_LED_SYNC_BRIGHTNESS_CURVE_NUM_SAMPLES];
+		struct t_led_sync_frame frames[XRT_TRACKING_MAX_FRAME_SOURCES][T_LED_SYNC_BRIGHTNESS_CURVE_NUM_SAMPLES];
 	} optimize_brightness_curve;
 
 	struct t_led_sync_delta_sync delta_sync;

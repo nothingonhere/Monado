@@ -388,7 +388,7 @@ public: // Fields
 		{
 			//! The latest sequence ID this device was seen at.
 			std::optional<int64_t> last_seen_sequence_id{std::nullopt};
-		} per_camera[XRT_CONSTELLATION_MAX_TRACKING_MOSAICS * XRT_TRACKING_MAX_CAMS];
+		} per_camera[XRT_CONSTELLATION_MAX_TRACKING_MOSAICS * XRT_TRACKING_MAX_FRAME_SOURCES];
 	} locked_data;
 	// clang-format on
 

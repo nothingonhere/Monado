@@ -108,7 +108,7 @@ struct Keyframe
 	 */
 	bool sealed;
 
-	std::array<DeviceObservation, XRT_TRACKING_MAX_CAMS> observations;
+	std::array<DeviceObservation, XRT_TRACKING_MAX_FRAME_SOURCES> observations;
 	uint32_t num_observations;
 };
 
@@ -402,7 +402,7 @@ struct SnapshotKeyframe
 	bool sealed;
 
 	uint32_t num_observations;
-	std::array<SnapshotObservation, XRT_TRACKING_MAX_CAMS> observations;
+	std::array<SnapshotObservation, XRT_TRACKING_MAX_FRAME_SOURCES> observations;
 
 	SolvedDeviceKeyframe device;
 };
@@ -493,7 +493,8 @@ public: // Fields
 	uint32_t num_keyframes{0};
 
 	//! The cameras that are present in the system
-	std::array<std::array<CameraDescription, XRT_TRACKING_MAX_CAMS>, XRT_CONSTELLATION_MAX_TRACKING_MOSAICS>
+	std::array<std::array<CameraDescription, XRT_TRACKING_MAX_FRAME_SOURCES>,
+	           XRT_CONSTELLATION_MAX_TRACKING_MOSAICS>
 	    cameras{};
 
 	Device device;
