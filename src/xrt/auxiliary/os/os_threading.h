@@ -192,6 +192,93 @@ os_mutex_recursive_destroy(struct os_mutex *om)
 
 /*
  *
+ * Read-write lock.
+ *
+ */
+
+/*!
+ * A wrapper around a native read-write lock.
+ */
+struct os_rwlock
+{
+	pthread_rwlock_t rwlock;
+
+#ifndef NDEBUG
+	bool initialized;
+#endif
+};
+
+/*!
+ * Init.
+ *
+ * @public @memberof os_rwlock
+ */
+static inline int
+os_rwlock_init(struct os_rwlock *orwl)
+{
+	assert(!orwl->initialized);
+#ifndef NDEBUG
+	orwl->initialized = true;
+#endif
+	return pthread_rwlock_init(&orwl->rwlock, NULL);
+}
+
+/*!
+ * Lock for reading, any number of readers can hold it at the same time.
+ *
+ * @public @memberof os_rwlock
+ */
+static inline void
+os_rwlock_read_lock(struct os_rwlock *orwl)
+{
+	assert(orwl->initialized);
+	pthread_rwlock_rdlock(&orwl->rwlock);
+}
+
+/*!
+ * Lock for writing, waits for all readers and writers to unlock.
+ *
+ * @public @memberof os_rwlock
+ */
+static inline void
+os_rwlock_write_lock(struct os_rwlock *orwl)
+{
+	assert(orwl->initialized);
+	pthread_rwlock_wrlock(&orwl->rwlock);
+}
+
+/*!
+ * Unlock, from either a read or a write lock.
+ *
+ * @public @memberof os_rwlock
+ */
+static inline void
+os_rwlock_unlock(struct os_rwlock *orwl)
+{
+	assert(orwl->initialized);
+	pthread_rwlock_unlock(&orwl->rwlock);
+}
+
+/*!
+ * Clean up.
+ *
+ * @public @memberof os_rwlock
+ */
+static inline void
+os_rwlock_destroy(struct os_rwlock *orwl)
+{
+	assert(orwl->initialized);
+
+	pthread_rwlock_destroy(&orwl->rwlock);
+
+#ifndef NDEBUG
+	orwl->initialized = false;
+#endif
+}
+
+
+/*
+ *
  * Conditional variable.
  *
  */
